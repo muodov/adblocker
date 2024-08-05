@@ -41,7 +41,7 @@ import IFilter from './interface.js';
 import { HTMLSelector, extractHTMLSelectorFromRule } from '../html-filtering.js';
 
 const EMPTY_TOKENS: [Uint32Array] = [EMPTY_UINT32_ARRAY];
-export const DEFAULT_HIDDING_STYLE: string = 'display: none !important;';
+export const DEFAULT_HIDDING_STYLE: string = 'opacity: 0 !important; z-index: -1 !important; pointer-events: none !important;';
 
 const REGEXP_UNICODE_COMMA = new RegExp(/\\u002C/, 'g');
 const REGEXP_UNICODE_BACKSLASH = new RegExp(/\\u005C/, 'g');
