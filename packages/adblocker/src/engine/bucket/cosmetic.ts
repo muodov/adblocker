@@ -97,7 +97,7 @@ function createStylesheetFromRulesWithCustomStyles(rules: CosmeticFilter[]): str
  * `rules`. In case one is found on the way, we fallback to the slower
  * `createStylesheetFromRulesWithCustomStyles` function.
  */
-function createStylesheetFromRules(rules: CosmeticFilter[]): string {
+function createStylesheetFromRules(rules: CosmeticFilter[], defaultHidingStyle = DEFAULT_HIDDING_STYLE): string {
   const selectors: string[] = [];
   for (const rule of rules) {
     if (rule.hasCustomStyle()) {
@@ -107,7 +107,7 @@ function createStylesheetFromRules(rules: CosmeticFilter[]): string {
     selectors.push(rule.selector);
   }
 
-  return createStylesheet(selectors, DEFAULT_HIDDING_STYLE);
+  return createStylesheet(selectors, defaultHidingStyle);
 }
 
 function createLookupTokens(hostname: string, domain: string): Uint32Array {
@@ -206,7 +206,11 @@ export default class CosmeticFilterBucket {
   public baseStylesheet: string | null;
   public extraGenericRules: CosmeticFilter[] | null;
 
-  constructor({ filters = [], config }: { filters?: CosmeticFilter[]; config: Config }) {
+  public defaultHidingStyle: string;
+
+  constructor({ filters = [], config, defaultHidingStyle = DEFAULT_HIDDING_STYLE }: { filters?: CosmeticFilter[]; config: Config; defaultHidingStyle: string }) {
+    this.defaultHidingStyle = defaultHidingStyle;
+
     this.genericRules = new FiltersContainer({
       config,
       deserialize: CosmeticFilter.deserialize,
@@ -550,7 +554,7 @@ export default class CosmeticFilterBucket {
         stylesheet += '\n\n';
       }
 
-      stylesheet += createStylesheetFromRules(filters);
+      stylesheet += createStylesheetFromRules(filters, this.defaultHidingStyle);
     }
 
     const extended: IMessageFromBackground['extended'] = [];
@@ -592,7 +596,7 @@ export default class CosmeticFilterBucket {
    */
   private getGenericRules(): CosmeticFilter[] {
     if (this.extraGenericRules === null) {
-      return this.lazyPopulateGenericRulesCache().genericRules;
+      return this.lazyPopulateGenericRulesCache(this.defaultHidingStyle).genericRules;
     }
     return this.extraGenericRules;
   }
@@ -606,7 +610,7 @@ export default class CosmeticFilterBucket {
    */
   private getBaseStylesheet(): string {
     if (this.baseStylesheet === null) {
-      return this.lazyPopulateGenericRulesCache().baseStylesheet;
+      return this.lazyPopulateGenericRulesCache(this.defaultHidingStyle).baseStylesheet;
     }
     return this.baseStylesheet;
   }
@@ -618,7 +622,7 @@ export default class CosmeticFilterBucket {
    * be un-hidden. Since this list will not change between updates we can
    * generate once and use many times.
    */
-  private lazyPopulateGenericRulesCache(): {
+  private lazyPopulateGenericRulesCache(defaultStyle: string): {
     baseStylesheet: string;
     genericRules: CosmeticFilter[];
   } {
@@ -653,7 +657,7 @@ export default class CosmeticFilterBucket {
         }
       }
 
-      this.baseStylesheet = createStylesheetFromRules(cannotBeHiddenRules);
+      this.baseStylesheet = createStylesheetFromRules(cannotBeHiddenRules, defaultStyle);
       this.extraGenericRules = canBeHiddenRules;
     }
 
